@@ -258,8 +258,11 @@ function colorFromName(name) {
   return colors[name.charCodeAt(0) % colors.length];
 }
 
-function postMessage(type, payload = {}) {
-  window.parent.postMessage({ type, ...payload }, "*");
+function sendHostMessage(type, payload = {}) {
+  if (window.parent && window.parent !== window) {
+    window.parent.sendHostMessage({ type, ...payload }, "*");
+  }
+}, "*");
 }
 
 function getAIContent(post, model) {
@@ -324,7 +327,7 @@ function attachAIHandlers(container, post) {
       `;
       output.classList.add("visible");
 
-      postMessage("AI_BUTTON_CLICK", {
+      sendHostMessage("AI_BUTTON_CLICK", {
         postId: post.id,
         condition: EXP_CONDITION,
         model
@@ -354,7 +357,10 @@ function save() {
 
 // ---------- Load Post ----------
 fetch("../data/posts.json")
-  .then(r => r.json())
+  .then(r => {
+    if (!r.ok) throw new Error(`HTTP ${r.status} when loading ../data/posts.json`);
+    return r.json();
+  })
   .then(posts => {
     const post = posts.find(p => p.id === postId);
 
@@ -406,7 +412,7 @@ function renderMainPost(post) {
   `;
 
   thread.appendChild(el);
-  postMessage("POST_VISIBLE", { postId, condition: EXP_CONDITION });
+  sendHostMessage("POST_VISIBLE", { postId, condition: EXP_CONDITION });
 
   el.querySelector(".like").addEventListener("click", () => {
     state.liked = !state.liked;
@@ -415,7 +421,7 @@ function renderMainPost(post) {
     el.querySelector(".like").classList.toggle("liked", state.liked);
     save();
 
-    postMessage("USER_LIKE", { postId, count: state.likes });
+    sendHostMessage("USER_LIKE", { postId, count: state.likes });
   });
 
   el.querySelector(".retweet").addEventListener("click", () => {
@@ -425,14 +431,14 @@ function renderMainPost(post) {
     el.querySelector(".retweet").classList.toggle("retweeted", state.retweeted);
     save();
 
-    postMessage("USER_RETWEET", { postId, count: state.retweets });
+    sendHostMessage("USER_RETWEET", { postId, count: state.retweets });
   });
 
   el.querySelector(".comment").addEventListener("click", () => {
     document.getElementById("replyBox").scrollIntoView({ behavior: "smooth", block: "center" });
     const ta = document.getElementById("userReply");
     if (ta) ta.focus();
-    postMessage("COMMENT_BOX_OPEN", { postId });
+    sendHostMessage("COMMENT_BOX_OPEN", { postId });
   });
 }
 
@@ -500,7 +506,7 @@ function renderUserComments() {
     state.comments.push(txt);
     save();
 
-    postMessage("USER_COMMENT", {
+    sendHostMessage("USER_COMMENT", {
       postId,
       text: txt
     });
@@ -515,13 +521,13 @@ window.addEventListener("scroll", () => {
   const depth = Math.round((window.scrollY + window.innerHeight) / document.body.scrollHeight * 100);
   if (depth !== lastDepth) {
     lastDepth = depth;
-    postMessage("SCROLL_DEPTH_CONVO", { postId, depth });
+    sendHostMessage("SCROLL_DEPTH_CONVO", { postId, depth });
   }
 });
 
 // ---------- Time on Conversation ----------
 window.addEventListener("beforeunload", () => {
-  postMessage("TIME_ON_CONVO", {
+  sendHostMessage("TIME_ON_CONVO", {
     postId,
     ms: Date.now() - convoStart
   });
