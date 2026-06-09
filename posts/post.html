@@ -1,0 +1,532 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Conversation</title>
+
+<style>
+:root {
+  --bg:#f6f7fb;
+  --card:#fff;
+  --muted:#6b7280;
+  --accent:#1f6feb;
+  --radius:12px;
+  --shadow:0 4px 12px rgba(35,40,50,0.08);
+  font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+
+body {
+  background:var(--bg);
+  margin:20px;
+}
+
+.container {
+  max-width:800px;
+  margin:auto;
+}
+
+.top-nav {
+  position: sticky;
+  top: 12px;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.home-btn {
+  text-decoration:none;
+  font-weight:600;
+  color:#1f6feb;
+  background:#eef2ff;
+  padding:8px 14px;
+  border-radius:20px;
+}
+
+.post {
+  background:var(--card);
+  border-radius:var(--radius);
+  padding:14px;
+  box-shadow:var(--shadow);
+  display:flex;
+  gap:12px;
+  margin-bottom:16px;
+}
+
+.avatar {
+  width:48px;
+  height:48px;
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  color:#fff;
+  font-weight:700;
+  flex-shrink:0;
+}
+
+.content {
+  flex:1;
+  min-width:0;
+}
+
+.meta {
+  font-size:13px;
+  color:var(--muted);
+}
+
+.name {
+  font-weight:700;
+  margin-right:6px;
+}
+
+.text {
+  margin-top:6px;
+  font-size:15px;
+  line-height:1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.thumb {
+  width:100%;
+  border-radius:10px;
+  margin-top:10px;
+  display:block;
+}
+
+.actions {
+  margin-top:12px;
+  display:flex;
+  gap:20px;
+  flex-wrap: wrap;
+  color:var(--muted);
+}
+
+.actions button {
+  background:none;
+  border:none;
+  cursor:pointer;
+  padding:4px 6px;
+  border-radius:6px;
+  font:inherit;
+}
+
+.actions button:hover { background:#f1f5f9; }
+
+.liked { color:#e0245e; }
+.retweeted { color:#17bf63; }
+
+.ai-summary {
+  background:#fffdf8;
+  border:1px solid #fbe5b3;
+}
+
+.ai-summary .label {
+  font-weight:700;
+  font-size:13px;
+  margin-bottom:8px;
+}
+
+.ai-choice-row {
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-bottom:10px;
+}
+
+.ai-choice-btn {
+  border:1px solid #d4d8e1;
+  background:white;
+  color:#111827;
+  border-radius:999px;
+  padding:7px 12px;
+  font-weight:700;
+  cursor:pointer;
+  font-size:13px;
+}
+
+.ai-choice-btn:hover {
+  background:#f8fafc;
+}
+
+.ai-choice-btn.grok {
+  border-color:#7c3aed;
+}
+
+.ai-choice-btn.claude {
+  border-color:#d97706;
+}
+
+.ai-output {
+  display:none;
+  margin-top:6px;
+  padding:10px;
+  border-radius:8px;
+  background:#fff;
+  border:1px solid #e5e7eb;
+  line-height:1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.ai-output.visible {
+  display:block;
+}
+
+.ai-output .source {
+  display:inline-block;
+  font-size:12px;
+  font-weight:700;
+  margin-bottom:6px;
+  color:#6b7280;
+}
+
+.user-comment {
+  background:#f0f7ff;
+  border:1px solid #dbeafe;
+}
+
+.comment-box {
+  margin-bottom:16px;
+}
+
+.comment-box textarea {
+  width:100%;
+  min-height:80px;
+  border-radius:8px;
+  border:1px solid #d1d5db;
+  padding:8px;
+  font-size:14px;
+  box-sizing:border-box;
+}
+
+.comment-box button {
+  margin-top:6px;
+  background:var(--accent);
+  color:white;
+  border:none;
+  padding:7px 14px;
+  border-radius:8px;
+  font-weight:600;
+  cursor:pointer;
+}
+
+.bottom-nav {
+  display: flex;
+  justify-content: center;
+  margin: 40px 0 60px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <div class="top-nav">
+    <a class="home-btn" href="../index.html">← Return to timeline</a>
+  </div>
+
+  <div id="thread"></div>
+
+  <div class="bottom-nav">
+    <a class="home-btn" href="../index.html">← Return to timeline</a>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// Experiment mode
+// Keep this aligned with index.html.
+// ============================================================
+const EXP_CONDITION = "choice_ai";
+
+// ---------- Helpers ----------
+function initials(name) {
+  return name.split(/\s+/).map(w => w[0]).join("").slice(0, 2).toUpperCase();
+}
+
+function colorFromName(name) {
+  const colors = [
+    "linear-gradient(135deg,#1f6feb,#3b82f6)",
+    "linear-gradient(135deg,#10b981,#34d399)",
+    "linear-gradient(135deg,#f59e0b,#fbbf24)",
+    "linear-gradient(135deg,#ec4899,#f472b6)",
+    "linear-gradient(135deg,#6366f1,#8b5cf6)"
+  ];
+  return colors[name.charCodeAt(0) % colors.length];
+}
+
+function postMessage(type, payload = {}) {
+  window.parent.postMessage({ type, ...payload }, "*");
+}
+
+function getAIContent(post, model) {
+  if (post.ai && typeof post.ai === "object") {
+    if (model === "grok" && post.ai.grok) return post.ai.grok;
+    if (model === "claude" && post.ai.claude) return post.ai.claude;
+    if (model === "fixed" && post.ai.fixed) return post.ai.fixed;
+  }
+
+  if (post.aiSummary) return post.aiSummary;
+
+  return "AI context is not available for this post yet.";
+}
+
+function renderAIBlock(post) {
+  if (EXP_CONDITION === "no_ai") return "";
+
+  if (EXP_CONDITION === "fixed_ai") {
+    return `
+      <article class="post ai-summary">
+        <div class="avatar">🤖</div>
+        <div class="content">
+          <div class="label">AI Context</div>
+          <div class="ai-choice-row">
+            <button class="ai-choice-btn" data-ai-model="fixed">Generate context</button>
+          </div>
+          <div class="ai-output" aria-live="polite"></div>
+        </div>
+      </article>
+    `;
+  }
+
+  return `
+    <article class="post ai-summary">
+      <div class="avatar">🤖</div>
+      <div class="content">
+        <div class="label">Choose a source for extra context</div>
+        <div class="ai-choice-row">
+          <button class="ai-choice-btn grok" data-ai-model="grok">Grok</button>
+          <button class="ai-choice-btn claude" data-ai-model="claude">Claude</button>
+        </div>
+        <div class="ai-output" aria-live="polite"></div>
+      </div>
+    </article>
+  `;
+}
+
+function attachAIHandlers(container, post) {
+  const buttons = container.querySelectorAll("[data-ai-model]");
+  const output = container.querySelector(".ai-output");
+  if (!buttons.length || !output) return;
+
+  buttons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      const model = btn.getAttribute("data-ai-model");
+      const content = getAIContent(post, model);
+      const label = model === "grok" ? "Grok" : model === "claude" ? "Claude" : "AI";
+
+      output.innerHTML = `
+        <span class="source">${label}</span>
+        <div>${content}</div>
+      `;
+      output.classList.add("visible");
+
+      postMessage("AI_BUTTON_CLICK", {
+        postId: post.id,
+        condition: EXP_CONDITION,
+        model
+      });
+    });
+  });
+}
+
+// ---------- Load ID + State ----------
+const postId = new URLSearchParams(location.search).get("id");
+const thread = document.getElementById("thread");
+const convoStart = Date.now();
+let timelineState = JSON.parse(sessionStorage.getItem("timelineState") || "{}");
+
+const state = timelineState[postId] ||= {
+  likes: 0,
+  retweets: 0,
+  comments: [],
+  liked: false,
+  retweeted: false
+};
+
+function save() {
+  timelineState[postId] = state;
+  sessionStorage.setItem("timelineState", JSON.stringify(timelineState));
+}
+
+// ---------- Load Post ----------
+fetch("../data/posts.json")
+  .then(r => r.json())
+  .then(posts => {
+    const post = posts.find(p => p.id === postId);
+
+    if (!post) {
+      thread.innerHTML = `<div class="post"><div class="content">Post not found.</div></div>`;
+      return;
+    }
+
+    if (!state.initialized) {
+      state.likes = post.likes || 0;
+      state.retweets = post.retweets || 0;
+      state.initialized = true;
+      save();
+    }
+
+    renderMainPost(post);
+    const aiEl = renderAISection(post);
+    if (aiEl) thread.appendChild(aiEl);
+    (post.replies || []).forEach(r => renderReply(r));
+    renderUserComments();
+  })
+  .catch(err => {
+    console.error(err);
+    thread.innerHTML = `<div class="post"><div class="content">Could not load this conversation.</div></div>`;
+  });
+
+// ---------- Render Main ----------
+function renderMainPost(post) {
+  const el = document.createElement("article");
+  el.className = "post";
+
+  el.innerHTML = `
+    <div class="avatar" style="background:${colorFromName(post.author)}">
+      ${initials(post.author)}
+    </div>
+    <div class="content">
+      <div class="meta">
+        <span class="name">${post.author}</span>
+        ${post.handle} · ${post.timestamp}
+      </div>
+      <div class="text">${post.text}</div>
+      ${post.image ? `<img src="../${post.image}" class="thumb" alt="Post image">` : ""}
+      <div class="actions">
+        <button class="like ${state.liked ? "liked" : ""}">❤️ <span>${state.likes}</span></button>
+        <button class="retweet ${state.retweeted ? "retweeted" : ""}">🔁 <span>${state.retweets}</span></button>
+        <button class="comment">💬 <span>${(post.replies?.length || 0) + state.comments.length}</span></button>
+      </div>
+    </div>
+  `;
+
+  thread.appendChild(el);
+  postMessage("POST_VISIBLE", { postId, condition: EXP_CONDITION });
+
+  el.querySelector(".like").addEventListener("click", () => {
+    state.liked = !state.liked;
+    state.likes += state.liked ? 1 : -1;
+    el.querySelector(".like span").textContent = state.likes;
+    el.querySelector(".like").classList.toggle("liked", state.liked);
+    save();
+
+    postMessage("USER_LIKE", { postId, count: state.likes });
+  });
+
+  el.querySelector(".retweet").addEventListener("click", () => {
+    state.retweeted = !state.retweeted;
+    state.retweets += state.retweeted ? 1 : -1;
+    el.querySelector(".retweet span").textContent = state.retweets;
+    el.querySelector(".retweet").classList.toggle("retweeted", state.retweeted);
+    save();
+
+    postMessage("USER_RETWEET", { postId, count: state.retweets });
+  });
+
+  el.querySelector(".comment").addEventListener("click", () => {
+    document.getElementById("replyBox").scrollIntoView({ behavior: "smooth", block: "center" });
+    const ta = document.getElementById("userReply");
+    if (ta) ta.focus();
+    postMessage("COMMENT_BOX_OPEN", { postId });
+  });
+}
+
+// ---------- AI Section ----------
+function renderAISection(post) {
+  if (EXP_CONDITION === "no_ai") return null;
+
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = renderAIBlock(post);
+  const aiCard = wrapper.firstElementChild;
+  attachAIHandlers(aiCard, post);
+  return aiCard;
+}
+
+// ---------- Replies ----------
+function renderReply(reply) {
+  const el = document.createElement("article");
+  el.className = "post";
+
+  el.innerHTML = `
+    <div class="avatar" style="background:${colorFromName(reply.author)}">
+      ${initials(reply.author)}
+    </div>
+    <div class="content">
+      <div class="name">${reply.author}</div>
+      <div class="meta">${reply.handle || ""}</div>
+      <div class="text">${reply.text}</div>
+    </div>
+  `;
+
+  thread.appendChild(el);
+}
+
+// ---------- User Comments ----------
+function renderUserComments() {
+  state.comments.forEach(c => {
+    const el = document.createElement("article");
+    el.className = "post user-comment";
+
+    el.innerHTML = `
+      <div class="avatar" style="background:#2563eb">YOU</div>
+      <div class="content">
+        <div class="name">You</div>
+        <div class="text">${c}</div>
+      </div>
+    `;
+
+    thread.appendChild(el);
+  });
+
+  const box = document.createElement("div");
+  box.className = "comment-box";
+  box.id = "replyBox";
+  box.innerHTML = `
+    <textarea id="userReply" placeholder="Write a reply..."></textarea>
+    <button id="postReply" type="button">Reply</button>
+  `;
+  thread.appendChild(box);
+
+  box.querySelector("#postReply").addEventListener("click", () => {
+    const ta = box.querySelector("#userReply");
+    const txt = ta.value.trim();
+    if (!txt) return;
+
+    state.comments.push(txt);
+    save();
+
+    postMessage("USER_COMMENT", {
+      postId,
+      text: txt
+    });
+
+    location.reload();
+  });
+}
+
+// ---------- Scroll Depth ----------
+let lastDepth = 0;
+window.addEventListener("scroll", () => {
+  const depth = Math.round((window.scrollY + window.innerHeight) / document.body.scrollHeight * 100);
+  if (depth !== lastDepth) {
+    lastDepth = depth;
+    postMessage("SCROLL_DEPTH_CONVO", { postId, depth });
+  }
+});
+
+// ---------- Time on Conversation ----------
+window.addEventListener("beforeunload", () => {
+  postMessage("TIME_ON_CONVO", {
+    postId,
+    ms: Date.now() - convoStart
+  });
+});
+</script>
+
+</body>
+</html>
