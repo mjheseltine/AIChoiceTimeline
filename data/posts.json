@@ -1,0 +1,241 @@
+[
+  {
+    "id": "post1",
+    "author": "National News",
+    "handle": "@nationalnews",
+    "timestamp": "1h",
+    "likes": 145,
+    "retweets": 22,
+    "text": "Congress is debating a new border security package after weeks of negotiations.",
+    "image": "",
+    "ai": {
+      "grok": "Supporters argue the proposal strengthens enforcement and addresses long-standing security concerns at the border.",
+      "claude": "Supporters say the proposal could improve border management, though critics warn about impacts on migrants and asylum seekers."
+    },
+    "replies": []
+  },
+
+  {
+    "id": "post2",
+    "author": "Economic Daily",
+    "handle": "@econ_daily",
+    "timestamp": "2h",
+    "likes": 201,
+    "retweets": 48,
+    "text": "The Federal Reserve announced it will leave interest rates unchanged.",
+    "image": "",
+    "ai": {
+      "grok": "Officials emphasized controlling inflation and maintaining economic stability.",
+      "claude": "Officials highlighted balancing inflation concerns with risks to employment and household finances."
+    },
+    "replies": []
+  },
+
+  {
+    "id": "post3",
+    "author": "City Beat",
+    "handle": "@citybeat",
+    "timestamp": "3h",
+    "likes": 88,
+    "retweets": 11,
+    "text": "A major city approved funding for additional public transit projects.",
+    "image": "",
+    "ai": {
+      "grok": "Backers say the investment could improve efficiency and reduce traffic congestion.",
+      "claude": "Backers say the investment could expand transportation access and reduce inequality in mobility."
+    },
+    "replies": []
+  },
+
+  {
+    "id": "post4",
+    "author": "Policy Watch",
+    "handle": "@policywatch",
+    "timestamp": "4h",
+    "likes": 167,
+    "retweets": 29,
+    "text": "Lawmakers introduced a proposal to expand renewable energy subsidies.",
+    "image": "",
+    "ai": {
+      "grok": "Critics question whether additional subsidies are the most efficient use of taxpayer funds.",
+      "claude": "Supporters argue subsidies can accelerate the transition to cleaner energy and reduce emissions."
+    },
+    "replies": []
+  },
+
+  {
+    "id": "post5",
+    "author": "Health Today",
+    "handle": "@healthtoday",
+    "timestamp": "5h",
+    "likes": 132,
+    "retweets": 18,
+    "text": "A new study finds rising rates of anxiety among teenagers.",
+    "image": "",
+    "ai": {
+      "grok": "Researchers are examining social media use, family instability, and other contributing factors.",
+      "claude": "Researchers are examining social pressures, mental health access, and broader social influences."
+    },
+    "replies": []
+  },
+
+  {
+    "id": "post6",
+    "author": "World Desk",
+    "handle": "@worlddesk",
+    "timestamp": "6h",
+    "likes": 221,
+    "retweets": 54,
+    "text": "International leaders met to discuss ongoing trade disputes.",
+    "image": "",
+    "ai": {
+      "grok": "Several governments emphasized protecting domestic industries and workers.",
+      "claude": "Several governments emphasized cooperation and reducing barriers to international commerce."
+    },
+    "replies": []
+  },
+
+  {
+    "id": "post7",
+    "author": "Campus News",
+    "handle": "@campusnews",
+    "timestamp": "7h",
+    "likes": 94,
+    "retweets": 13,
+    "text": "Universities are revising admissions policies following recent court decisions.",
+    "image": "",
+    "ai": {
+      "grok": "Some advocates say admissions should focus on individual merit and academic achievement.",
+      "claude": "Some advocates argue institutions should continue pursuing diverse educational environments."
+    },
+    "replies": []
+  },
+
+  {
+    "id": "post8",
+    "author": "Science Report",
+    "handle": "@science_report",
+    "timestamp": "8h",
+    "likes": 176,
+    "retweets": 41,
+    "text": "Researchers announced progress on next-generation battery technology.",
+    "image": "",
+    "ai": {
+      "grok": "The breakthrough could strengthen domestic manufacturing and energy independence.",
+      "claude": "The breakthrough could support climate goals and reduce reliance on fossil fuels."
+    },
+    "replies": []
+  },
+
+  {
+    "id": "post9",
+    "author": "State News",
+    "handle": "@statenews",
+    "timestamp": "9h",
+    "likes": 108,
+    "retweets": 16,
+    "text": "A state legislature approved a school choice expansion bill.",
+    "image": "",
+    "ai": {
+      "grok": "Supporters argue parents should have more control over educational options.",
+      "claude": "Critics worry the policy could divert resources away from public schools."
+    },
+    "replies": []
+  },
+
+  {
+    "id": "post10",
+    "author": "Justice Journal",
+    "handle": "@justicejournal",
+    "timestamp": "10h",
+    "likes": 121,
+    "retweets": 20,
+    "text": "Officials reported a decline in violent crime in several major cities.",
+    "image": "",
+    "ai": {
+      "grok": "Some analysts credit proactive policing and targeted enforcement efforts.",
+      "claude": "Some analysts point to community investment and prevention programs."
+    },
+    "replies": []
+  },
+
+  {
+    "id": "post11",
+    "author": "Tech Wire",
+    "handle": "@techwire",
+    "timestamp": "11h",
+    "likes": 247,
+    "retweets": 65,
+    "text": "AI companies are facing new proposals for federal regulation.",
+    "image": "",
+    "ai": {
+      "grok": "Industry groups caution that excessive regulation could slow innovation.",
+      "claude": "Advocates argue stronger oversight may reduce risks and improve accountability."
+    },
+    "replies": []
+  },
+
+  {
+    "id": "post12",
+    "author": "Labor Report",
+    "handle": "@laborreport",
+    "timestamp": "12h",
+    "likes": 137,
+    "retweets": 27,
+    "text": "Workers at a major retailer voted to form a union.",
+    "image": "",
+    "ai": {
+      "grok": "Critics say unionization may reduce flexibility and increase business costs.",
+      "claude": "Supporters say unionization can strengthen worker bargaining power and workplace protections."
+    },
+    "replies": []
+  },
+
+  {
+    "id": "post13",
+    "author": "Environment Now",
+    "handle": "@env_now",
+    "timestamp": "13h",
+    "likes": 158,
+    "retweets": 34,
+    "text": "Federal agencies released new climate resilience guidelines.",
+    "image": "",
+    "ai": {
+      "grok": "Officials say resilience planning should account for economic costs and feasibility.",
+      "claude": "Officials say resilience planning is essential to protect vulnerable communities."
+    },
+    "replies": []
+  },
+
+  {
+    "id": "post14",
+    "author": "Election Watch",
+    "handle": "@electionwatch",
+    "timestamp": "14h",
+    "likes": 199,
+    "retweets": 52,
+    "text": "States are considering updates to election administration procedures.",
+    "image": "",
+    "ai": {
+      "grok": "Supporters emphasize election integrity, verification, and public confidence.",
+      "claude": "Supporters emphasize voter access, participation, and reducing barriers to voting."
+    },
+    "replies": []
+  },
+
+  {
+    "id": "post15",
+    "author": "Housing Desk",
+    "handle": "@housingdesk",
+    "timestamp": "15h",
+    "likes": 116,
+    "retweets": 19,
+    "text": "Local officials approved a plan to increase housing construction.",
+    "image": "",
+    "ai": {
+      "grok": "Backers say additional housing could improve affordability through greater supply.",
+      "claude": "Backers say additional housing could expand access and reduce displacement pressures."
+    },
+    "replies": []
+  }
+]
