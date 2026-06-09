@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Timeline</title>
 
 <style>
@@ -198,7 +199,6 @@ body {
   text-decoration: underline;
 }
 
-/* AI SUMMARY / CHOICE MODULE */
 .ai-summary {
   margin-top: 10px;
   padding: 10px;
@@ -222,7 +222,7 @@ body {
 }
 
 .ai-choice-btn {
-  border: 1px solid #d4d8e1;
+  border: 2px solid #d4d8e1;
   background: white;
   color: #111827;
   border-radius: 999px;
@@ -230,18 +230,27 @@ body {
   font-weight: 700;
   cursor: pointer;
   font-size: 13px;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
 }
 
 .ai-choice-btn:hover {
   background: #f8fafc;
+  transform: translateY(-1px);
 }
 
 .ai-choice-btn.grok {
   border-color: #7c3aed;
+  background: #faf5ff;
 }
 
 .ai-choice-btn.claude {
   border-color: #d97706;
+  background: #fffbeb;
+}
+
+.ai-choice-btn.selected {
+  transform: scale(1.03);
+  box-shadow: 0 2px 8px rgba(0,0,0,.12);
 }
 
 .ai-output {
@@ -279,6 +288,13 @@ body {
 .view-link:hover {
   text-decoration: underline;
 }
+
+.empty-state {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 18px;
+  box-shadow: var(--shadow);
+}
 </style>
 </head>
 
@@ -305,20 +321,13 @@ body {
 </div>
 
 <script>
-// ============================================================
-// Experiment mode
-// For now this file is set to the two-AI-choice treatment.
-// Later you can change this to "no_ai" or "fixed_ai".
-// ============================================================
 const EXP_CONDITION = "choice_ai";
 
-// ---------- DOM refs ----------
 const timeline = document.getElementById("timeline");
 const searchInput = document.getElementById("searchInput");
 const trendingList = document.getElementById("trendingList");
 const weatherEl = document.getElementById("weather");
 
-// ---------- State ----------
 let timelineState = JSON.parse(sessionStorage.getItem("timelineState") || "{}");
 function save() {
   sessionStorage.setItem("timelineState", JSON.stringify(timelineState));
@@ -327,9 +336,13 @@ function save() {
 let allPosts = [];
 const timelineStart = Date.now();
 
-// ---------- Helpers ----------
 function initials(name) {
-  return name.split(/\s+/).map(w => w[0]).join("").slice(0, 2).toUpperCase();
+  return String(name)
+    .split(/\s+/)
+    .map(w => w[0] || "")
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 }
 
 function colorFromName(name) {
@@ -340,27 +353,34 @@ function colorFromName(name) {
     "linear-gradient(135deg,#ec4899,#f472b6)",
     "linear-gradient(135deg,#6366f1,#8b5cf6)"
   ];
-  return colors[name.charCodeAt(0) % colors.length];
+  const first = String(name || "").charCodeAt(0) || 0;
+  return colors[first % colors.length];
 }
 
-function postMessage(type, payload = {}) {
-  window.parent.postMessage({ type, ...payload }, "*");
+function sendHostMessage(type, payload = {}) {
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({ type, ...payload }, "*");
+  }
 }
 
 function getAIContent(data, model) {
-  // Preferred structure for later:
-  // data.ai = { grok: "...", claude: "...", fixed: "..." }
   if (data.ai && typeof data.ai === "object") {
     if (model === "grok" && data.ai.grok) return data.ai.grok;
     if (model === "claude" && data.ai.claude) return data.ai.claude;
     if (model === "fixed" && data.ai.fixed) return data.ai.fixed;
   }
 
-  // Backward-compatible fallback so the page still works if the JSON only
-  // has the older single summary field.
   if (data.aiSummary) return data.aiSummary;
-
   return "AI context is not available for this post yet.";
+}
+
+function escapeHtml(str) {
+  return String(str)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
 }
 
 function renderAIBlock(data) {
@@ -378,7 +398,6 @@ function renderAIBlock(data) {
     `;
   }
 
-  // Current default: two branded options
   return `
     <div class="ai-summary" data-ai-block>
       <div class="label">Choose a source for extra context</div>
@@ -400,14 +419,18 @@ function attachAIHandlers(wrapper, data) {
     btn.addEventListener("click", () => {
       const model = btn.getAttribute("data-ai-model");
       const content = getAIContent(data, model);
+      const label = model === "grok" ? "Grok" : model === "claude" ? "Claude" : "AI";
+
+      buttons.forEach(b => b.classList.remove("selected"));
+      btn.classList.add("selected");
 
       output.innerHTML = `
-        <span class="source">${model === "grok" ? "Grok" : model === "claude" ? "Claude" : "AI"}</span>
-        <div>${content}</div>
+        <span class="source">${label}</span>
+        <div>${escapeHtml(content)}</div>
       `;
       output.classList.add("visible");
 
-      postMessage("AI_BUTTON_CLICK", {
+      sendHostMessage("AI_BUTTON_CLICK", {
         postId: data.id,
         condition: EXP_CONDITION,
         model
@@ -416,24 +439,15 @@ function attachAIHandlers(wrapper, data) {
   });
 }
 
-// ---------- Load ----------
-fetch("data/posts.json")
-  .then(r => r.json())
-  .then(posts => {
-    allPosts = posts;
-    renderTimeline(posts);
-  })
-  .catch(err => {
-    console.error(err);
-    timeline.innerHTML = `<div class="widget">Could not load posts.</div>`;
-  });
-
 function renderTimeline(posts) {
   timeline.innerHTML = "";
+  if (!posts.length) {
+    timeline.innerHTML = `<div class="empty-state">No posts matched your search.</div>`;
+    return;
+  }
   posts.forEach(p => timeline.appendChild(createPost(p)));
 }
 
-// ---------- Create Post ----------
 function createPost(data) {
   const state = timelineState[data.id] ||= {
     likes: data.likes || 0,
@@ -446,35 +460,40 @@ function createPost(data) {
   const wrapper = document.createElement("article");
   wrapper.className = "post";
 
+  const repliesCount = Array.isArray(data.replies) ? data.replies.length : 0;
+  const imageHtml = data.image ? `<img src="${escapeHtml(data.image)}" class="thumb" alt="Post image">` : "";
+
   wrapper.innerHTML = `
     <div class="avatar" style="background:${colorFromName(data.author)}">
-      ${initials(data.author)}
+      ${escapeHtml(initials(data.author))}
     </div>
 
     <div class="content">
       <div class="meta">
-        <span class="name">${data.author}</span>
-        ${data.handle} · ${data.timestamp}
+        <span class="name">${escapeHtml(data.author)}</span>
+        ${escapeHtml(data.handle)} · ${escapeHtml(data.timestamp)}
       </div>
 
-      <div class="text">${data.text}</div>
+      <div class="text">${escapeHtml(data.text)}</div>
 
-      ${data.image ? `<img src="${data.image}" class="thumb" alt="Post image">` : ""}
+      ${imageHtml}
 
       ${renderAIBlock(data)}
 
       <div class="actions">
         <button class="like ${state.liked ? "liked" : ""}">❤️ <span>${state.likes}</span></button>
         <button class="retweet ${state.retweeted ? "retweeted" : ""}">🔁 <span>${state.retweets}</span></button>
-        <button class="comment">💬 <span>${(data.replies?.length || 0) + state.comments.length}</span></button>
+        <button class="comment">💬 <span>${repliesCount + state.comments.length}</span></button>
       </div>
 
       <div class="comment-box">
         <textarea placeholder="Write a comment..."></textarea>
+
         <div class="comment-controls">
           <button class="emoji-toggle" type="button">😊</button>
           <button class="submit" type="button">Reply</button>
         </div>
+
         <div class="emoji-panel">
           <span>😀</span><span>😂</span><span>😊</span><span>😍</span>
           <span>🤔</span><span>😡</span><span>😢</span><span>👍</span>
@@ -486,16 +505,14 @@ function createPost(data) {
     </div>
   `;
 
-  // Optional: lets your host page know a post was shown.
-  postMessage("POST_VISIBLE", { postId: data.id, condition: EXP_CONDITION });
+  sendHostMessage("POST_VISIBLE", { postId: data.id, condition: EXP_CONDITION });
 
   wrapper.addEventListener("mouseenter", () => {
-    postMessage("USER_HOVER_POST", { postId: data.id });
+    sendHostMessage("USER_HOVER_POST", { postId: data.id });
   });
 
-  const viewLink = wrapper.querySelector(".view-link");
-  viewLink.addEventListener("click", () => {
-    postMessage("POST_OPEN", { postId: data.id });
+  wrapper.querySelector(".view-link").addEventListener("click", () => {
+    sendHostMessage("POST_OPEN", { postId: data.id });
   });
 
   const likeBtn = wrapper.querySelector(".like");
@@ -514,7 +531,7 @@ function createPost(data) {
     likeBtn.querySelector("span").textContent = state.likes;
     save();
 
-    postMessage("USER_LIKE", {
+    sendHostMessage("USER_LIKE", {
       postId: data.id,
       count: state.likes
     });
@@ -527,7 +544,7 @@ function createPost(data) {
     rtBtn.querySelector("span").textContent = state.retweets;
     save();
 
-    postMessage("USER_RETWEET", {
+    sendHostMessage("USER_RETWEET", {
       postId: data.id,
       count: state.retweets
     });
@@ -537,7 +554,7 @@ function createPost(data) {
     box.style.display = box.style.display === "block" ? "none" : "block";
     ta.focus();
 
-    postMessage("COMMENT_BOX_OPEN", { postId: data.id });
+    sendHostMessage("COMMENT_BOX_OPEN", { postId: data.id });
   });
 
   emojiToggle.addEventListener("click", () => {
@@ -558,10 +575,10 @@ function createPost(data) {
     state.comments.push(txt);
     ta.value = "";
     box.style.display = "none";
-    commentBtn.querySelector("span").textContent = (data.replies?.length || 0) + state.comments.length;
+    commentBtn.querySelector("span").textContent = repliesCount + state.comments.length;
     save();
 
-    postMessage("USER_COMMENT", {
+    sendHostMessage("USER_COMMENT", {
       postId: data.id,
       text: txt
     });
@@ -571,40 +588,69 @@ function createPost(data) {
   return wrapper;
 }
 
-// ---------- Scroll Depth ----------
+fetch("./data/posts.json", { cache: "no-store" })
+  .then(async r => {
+    if (!r.ok) {
+      throw new Error(`HTTP ${r.status} when loading ./data/posts.json`);
+    }
+    return r.json();
+  })
+  .then(posts => {
+    if (!Array.isArray(posts)) {
+      throw new Error("posts.json did not return an array.");
+    }
+    allPosts = posts;
+    renderTimeline(posts);
+  })
+  .catch(async err => {
+    console.error("Could not load posts:", err);
+    timeline.innerHTML = `
+      <div class="empty-state">
+        <strong>Could not load posts.</strong>
+        <div style="margin-top:8px;color:#6b7280;line-height:1.4;">
+          Check that <code>data/posts.json</code> exists, the JSON is valid, and this page is being served from GitHub Pages rather than opened as a local file.
+        </div>
+      </div>
+    `;
+
+    try {
+      const res = await fetch("./data/posts.json", { cache: "no-store" });
+      const text = await res.text();
+      console.log("Raw posts.json contents:", text);
+    } catch (e) {
+      console.error("Could not even read raw posts.json:", e);
+    }
+  });
+
 let lastDepth = 0;
 window.addEventListener("scroll", () => {
   const depth = Math.round(
     (window.scrollY + window.innerHeight) / document.body.scrollHeight * 100
   );
 
-  // Reduce chatter if the page keeps firing the same percentage.
   if (depth !== lastDepth) {
     lastDepth = depth;
-    postMessage("SCROLL_DEPTH", { depth });
+    sendHostMessage("SCROLL_DEPTH", { depth });
   }
 });
 
-// ---------- Time on Timeline ----------
 window.addEventListener("beforeunload", () => {
-  postMessage("TIME_ON_TIMELINE", {
+  sendHostMessage("TIME_ON_TIMELINE", {
     ms: Date.now() - timelineStart
   });
 });
 
-// ---------- Search ----------
 searchInput.addEventListener("input", e => {
   const q = e.target.value.toLowerCase();
   renderTimeline(
     allPosts.filter(p =>
-      p.text.toLowerCase().includes(q) ||
-      p.author.toLowerCase().includes(q) ||
-      p.handle.toLowerCase().includes(q)
+      String(p.text || "").toLowerCase().includes(q) ||
+      String(p.author || "").toLowerCase().includes(q) ||
+      String(p.handle || "").toLowerCase().includes(q)
     )
   );
 });
 
-// ---------- Trending ----------
 ["#Shutdown", "#Trump", "#Kennedy", "#ICE", "#Congress"].forEach(tag => {
   const li = document.createElement("li");
   li.textContent = tag;
@@ -618,23 +664,23 @@ searchInput.addEventListener("input", e => {
   trendingList.appendChild(li);
 });
 
-// ---------- Weather ----------
 if (navigator.geolocation) {
-  navigator.geolocation.getCurrentPosition(pos => {
-    fetch(
-      `https://api.open-meteo.com/v1/forecast?latitude=${pos.coords.latitude}&longitude=${pos.coords.longitude}&current_weather=true`
-    )
-      .then(r => r.json())
-      .then(d => {
-        weatherEl.innerHTML =
-          `<strong>${Math.round(d.current_weather.temperature)}°C</strong><br>Wind ${d.current_weather.windspeed} km/h`;
-      })
-      .catch(() => {
-        weatherEl.textContent = "Weather unavailable.";
-      });
-  }, () => {
-    weatherEl.textContent = "Location blocked.";
-  });
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${pos.coords.latitude}&longitude=${pos.coords.longitude}&current_weather=true`)
+        .then(r => r.json())
+        .then(d => {
+          weatherEl.innerHTML =
+            `<strong>${Math.round(d.current_weather.temperature)}°C</strong><br>Wind ${d.current_weather.windspeed} km/h`;
+        })
+        .catch(() => {
+          weatherEl.textContent = "Weather unavailable.";
+        });
+    },
+    () => {
+      weatherEl.textContent = "Location blocked.";
+    }
+  );
 } else {
   weatherEl.textContent = "Geolocation unavailable.";
 }
