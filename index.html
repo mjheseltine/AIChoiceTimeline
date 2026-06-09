@@ -1,0 +1,644 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Timeline</title>
+
+<style>
+:root {
+  --bg: #f6f7fb;
+  --card: #fff;
+  --muted: #6b7280;
+  --accent: #1f6feb;
+  --radius: 12px;
+  --shadow: 0 4px 12px rgba(35, 40, 50, 0.08);
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+body {
+  background: var(--bg);
+  margin: 20px;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 24px;
+  max-width: 1100px;
+  margin: auto;
+}
+
+.container {
+  max-width: 800px;
+}
+
+.post {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-bottom: 16px;
+  display: flex;
+  gap: 12px;
+  box-shadow: var(--shadow);
+}
+
+.avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+}
+
+.meta {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.name {
+  font-weight: 700;
+  margin-right: 6px;
+}
+
+.text {
+  margin-top: 6px;
+  font-size: 15px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.thumb {
+  width: 100%;
+  border-radius: 10px;
+  margin-top: 10px;
+  display: block;
+}
+
+.actions {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  color: var(--muted);
+}
+
+.actions button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 6px;
+  font: inherit;
+}
+
+.actions button:hover {
+  background: #f1f5f9;
+}
+
+.liked { color: #e0245e; }
+.retweeted { color: #17bf63; }
+
+.comment-box {
+  margin-top: 10px;
+  display: none;
+}
+
+.comment-box textarea {
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  padding: 8px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.comment-controls {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.comment-box button {
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.emoji-panel {
+  display: none;
+  margin-top: 6px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 6px;
+  font-size: 20px;
+}
+
+.emoji-panel span {
+  cursor: pointer;
+  margin: 4px;
+  display: inline-block;
+}
+
+.sidebar {
+  position: sticky;
+  top: 20px;
+  align-self: start;
+}
+
+.widget {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow);
+}
+
+.widget h3 {
+  margin: 0 0 10px;
+  font-size: 15px;
+}
+
+.search-widget input {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  box-sizing: border-box;
+}
+
+#trendingList {
+  padding-left: 0;
+  margin: 0;
+}
+
+#trendingList li {
+  list-style: none;
+  padding: 6px 0;
+  font-weight: 600;
+  color: #1f6feb;
+  cursor: pointer;
+}
+
+#trendingList li:hover {
+  text-decoration: underline;
+}
+
+/* AI SUMMARY / CHOICE MODULE */
+.ai-summary {
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 10px;
+  background: #fffdf8;
+  border: 1px solid #fbe5b3;
+  font-size: 14px;
+}
+
+.ai-summary .label {
+  font-weight: 700;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.ai-choice-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.ai-choice-btn {
+  border: 1px solid #d4d8e1;
+  background: white;
+  color: #111827;
+  border-radius: 999px;
+  padding: 7px 12px;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.ai-choice-btn:hover {
+  background: #f8fafc;
+}
+
+.ai-choice-btn.grok {
+  border-color: #7c3aed;
+}
+
+.ai-choice-btn.claude {
+  border-color: #d97706;
+}
+
+.ai-output {
+  display: none;
+  margin-top: 6px;
+  padding: 10px;
+  border-radius: 8px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.ai-output.visible {
+  display: block;
+}
+
+.ai-output .source {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: #6b7280;
+}
+
+.view-link {
+  display: inline-block;
+  margin-top: 12px;
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.view-link:hover {
+  text-decoration: underline;
+}
+</style>
+</head>
+
+<body>
+
+<div class="layout">
+  <main class="container" id="timeline"></main>
+
+  <aside class="sidebar">
+    <div class="widget search-widget">
+      <input id="searchInput" placeholder="Search posts" aria-label="Search posts">
+    </div>
+
+    <div class="widget">
+      <h3>Trending</h3>
+      <ul id="trendingList"></ul>
+    </div>
+
+    <div class="widget">
+      <h3>Local Weather</h3>
+      <div id="weather">Loading…</div>
+    </div>
+  </aside>
+</div>
+
+<script>
+// ============================================================
+// Experiment mode
+// For now this file is set to the two-AI-choice treatment.
+// Later you can change this to "no_ai" or "fixed_ai".
+// ============================================================
+const EXP_CONDITION = "choice_ai";
+
+// ---------- DOM refs ----------
+const timeline = document.getElementById("timeline");
+const searchInput = document.getElementById("searchInput");
+const trendingList = document.getElementById("trendingList");
+const weatherEl = document.getElementById("weather");
+
+// ---------- State ----------
+let timelineState = JSON.parse(sessionStorage.getItem("timelineState") || "{}");
+function save() {
+  sessionStorage.setItem("timelineState", JSON.stringify(timelineState));
+}
+
+let allPosts = [];
+const timelineStart = Date.now();
+
+// ---------- Helpers ----------
+function initials(name) {
+  return name.split(/\s+/).map(w => w[0]).join("").slice(0, 2).toUpperCase();
+}
+
+function colorFromName(name) {
+  const colors = [
+    "linear-gradient(135deg,#1f6feb,#3b82f6)",
+    "linear-gradient(135deg,#10b981,#34d399)",
+    "linear-gradient(135deg,#f59e0b,#fbbf24)",
+    "linear-gradient(135deg,#ec4899,#f472b6)",
+    "linear-gradient(135deg,#6366f1,#8b5cf6)"
+  ];
+  return colors[name.charCodeAt(0) % colors.length];
+}
+
+function postMessage(type, payload = {}) {
+  window.parent.postMessage({ type, ...payload }, "*");
+}
+
+function getAIContent(data, model) {
+  // Preferred structure for later:
+  // data.ai = { grok: "...", claude: "...", fixed: "..." }
+  if (data.ai && typeof data.ai === "object") {
+    if (model === "grok" && data.ai.grok) return data.ai.grok;
+    if (model === "claude" && data.ai.claude) return data.ai.claude;
+    if (model === "fixed" && data.ai.fixed) return data.ai.fixed;
+  }
+
+  // Backward-compatible fallback so the page still works if the JSON only
+  // has the older single summary field.
+  if (data.aiSummary) return data.aiSummary;
+
+  return "AI context is not available for this post yet.";
+}
+
+function renderAIBlock(data) {
+  if (EXP_CONDITION === "no_ai") return "";
+
+  if (EXP_CONDITION === "fixed_ai") {
+    return `
+      <div class="ai-summary" data-ai-block>
+        <div class="label">AI Context</div>
+        <div class="ai-choice-row">
+          <button class="ai-choice-btn" data-ai-model="fixed">Generate context</button>
+        </div>
+        <div class="ai-output" aria-live="polite"></div>
+      </div>
+    `;
+  }
+
+  // Current default: two branded options
+  return `
+    <div class="ai-summary" data-ai-block>
+      <div class="label">Choose a source for extra context</div>
+      <div class="ai-choice-row">
+        <button class="ai-choice-btn grok" data-ai-model="grok">Grok</button>
+        <button class="ai-choice-btn claude" data-ai-model="claude">Claude</button>
+      </div>
+      <div class="ai-output" aria-live="polite"></div>
+    </div>
+  `;
+}
+
+function attachAIHandlers(wrapper, data) {
+  const buttons = wrapper.querySelectorAll("[data-ai-model]");
+  const output = wrapper.querySelector(".ai-output");
+  if (!buttons.length || !output) return;
+
+  buttons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      const model = btn.getAttribute("data-ai-model");
+      const content = getAIContent(data, model);
+
+      output.innerHTML = `
+        <span class="source">${model === "grok" ? "Grok" : model === "claude" ? "Claude" : "AI"}</span>
+        <div>${content}</div>
+      `;
+      output.classList.add("visible");
+
+      postMessage("AI_BUTTON_CLICK", {
+        postId: data.id,
+        condition: EXP_CONDITION,
+        model
+      });
+    });
+  });
+}
+
+// ---------- Load ----------
+fetch("data/posts.json")
+  .then(r => r.json())
+  .then(posts => {
+    allPosts = posts;
+    renderTimeline(posts);
+  })
+  .catch(err => {
+    console.error(err);
+    timeline.innerHTML = `<div class="widget">Could not load posts.</div>`;
+  });
+
+function renderTimeline(posts) {
+  timeline.innerHTML = "";
+  posts.forEach(p => timeline.appendChild(createPost(p)));
+}
+
+// ---------- Create Post ----------
+function createPost(data) {
+  const state = timelineState[data.id] ||= {
+    likes: data.likes || 0,
+    retweets: data.retweets || 0,
+    comments: [],
+    liked: false,
+    retweeted: false
+  };
+
+  const wrapper = document.createElement("article");
+  wrapper.className = "post";
+
+  wrapper.innerHTML = `
+    <div class="avatar" style="background:${colorFromName(data.author)}">
+      ${initials(data.author)}
+    </div>
+
+    <div class="content">
+      <div class="meta">
+        <span class="name">${data.author}</span>
+        ${data.handle} · ${data.timestamp}
+      </div>
+
+      <div class="text">${data.text}</div>
+
+      ${data.image ? `<img src="${data.image}" class="thumb" alt="Post image">` : ""}
+
+      ${renderAIBlock(data)}
+
+      <div class="actions">
+        <button class="like ${state.liked ? "liked" : ""}">❤️ <span>${state.likes}</span></button>
+        <button class="retweet ${state.retweeted ? "retweeted" : ""}">🔁 <span>${state.retweets}</span></button>
+        <button class="comment">💬 <span>${(data.replies?.length || 0) + state.comments.length}</span></button>
+      </div>
+
+      <div class="comment-box">
+        <textarea placeholder="Write a comment..."></textarea>
+        <div class="comment-controls">
+          <button class="emoji-toggle" type="button">😊</button>
+          <button class="submit" type="button">Reply</button>
+        </div>
+        <div class="emoji-panel">
+          <span>😀</span><span>😂</span><span>😊</span><span>😍</span>
+          <span>🤔</span><span>😡</span><span>😢</span><span>👍</span>
+          <span>👎</span><span>🎉</span><span>❤️</span><span>🔥</span>
+        </div>
+      </div>
+
+      <a class="view-link" href="posts/post.html?id=${encodeURIComponent(data.id)}">View conversation →</a>
+    </div>
+  `;
+
+  // Optional: lets your host page know a post was shown.
+  postMessage("POST_VISIBLE", { postId: data.id, condition: EXP_CONDITION });
+
+  wrapper.addEventListener("mouseenter", () => {
+    postMessage("USER_HOVER_POST", { postId: data.id });
+  });
+
+  const viewLink = wrapper.querySelector(".view-link");
+  viewLink.addEventListener("click", () => {
+    postMessage("POST_OPEN", { postId: data.id });
+  });
+
+  const likeBtn = wrapper.querySelector(".like");
+  const rtBtn = wrapper.querySelector(".retweet");
+  const commentBtn = wrapper.querySelector(".comment");
+  const box = wrapper.querySelector(".comment-box");
+  const ta = wrapper.querySelector("textarea");
+  const submit = wrapper.querySelector(".submit");
+  const emojiToggle = wrapper.querySelector(".emoji-toggle");
+  const emojiPanel = wrapper.querySelector(".emoji-panel");
+
+  likeBtn.addEventListener("click", () => {
+    state.liked = !state.liked;
+    state.likes += state.liked ? 1 : -1;
+    likeBtn.classList.toggle("liked", state.liked);
+    likeBtn.querySelector("span").textContent = state.likes;
+    save();
+
+    postMessage("USER_LIKE", {
+      postId: data.id,
+      count: state.likes
+    });
+  });
+
+  rtBtn.addEventListener("click", () => {
+    state.retweeted = !state.retweeted;
+    state.retweets += state.retweeted ? 1 : -1;
+    rtBtn.classList.toggle("retweeted", state.retweeted);
+    rtBtn.querySelector("span").textContent = state.retweets;
+    save();
+
+    postMessage("USER_RETWEET", {
+      postId: data.id,
+      count: state.retweets
+    });
+  });
+
+  commentBtn.addEventListener("click", () => {
+    box.style.display = box.style.display === "block" ? "none" : "block";
+    ta.focus();
+
+    postMessage("COMMENT_BOX_OPEN", { postId: data.id });
+  });
+
+  emojiToggle.addEventListener("click", () => {
+    emojiPanel.style.display = emojiPanel.style.display === "block" ? "none" : "block";
+  });
+
+  emojiPanel.querySelectorAll("span").forEach(e => {
+    e.addEventListener("click", () => {
+      ta.value += e.textContent;
+      ta.focus();
+    });
+  });
+
+  submit.addEventListener("click", () => {
+    const txt = ta.value.trim();
+    if (!txt) return;
+
+    state.comments.push(txt);
+    ta.value = "";
+    box.style.display = "none";
+    commentBtn.querySelector("span").textContent = (data.replies?.length || 0) + state.comments.length;
+    save();
+
+    postMessage("USER_COMMENT", {
+      postId: data.id,
+      text: txt
+    });
+  });
+
+  attachAIHandlers(wrapper, data);
+  return wrapper;
+}
+
+// ---------- Scroll Depth ----------
+let lastDepth = 0;
+window.addEventListener("scroll", () => {
+  const depth = Math.round(
+    (window.scrollY + window.innerHeight) / document.body.scrollHeight * 100
+  );
+
+  // Reduce chatter if the page keeps firing the same percentage.
+  if (depth !== lastDepth) {
+    lastDepth = depth;
+    postMessage("SCROLL_DEPTH", { depth });
+  }
+});
+
+// ---------- Time on Timeline ----------
+window.addEventListener("beforeunload", () => {
+  postMessage("TIME_ON_TIMELINE", {
+    ms: Date.now() - timelineStart
+  });
+});
+
+// ---------- Search ----------
+searchInput.addEventListener("input", e => {
+  const q = e.target.value.toLowerCase();
+  renderTimeline(
+    allPosts.filter(p =>
+      p.text.toLowerCase().includes(q) ||
+      p.author.toLowerCase().includes(q) ||
+      p.handle.toLowerCase().includes(q)
+    )
+  );
+});
+
+// ---------- Trending ----------
+["#Shutdown", "#Trump", "#Kennedy", "#ICE", "#Congress"].forEach(tag => {
+  const li = document.createElement("li");
+  li.textContent = tag;
+
+  li.addEventListener("click", () => {
+    const query = tag.replace(/^#/, "").toLowerCase();
+    searchInput.value = query;
+    searchInput.dispatchEvent(new Event("input"));
+  });
+
+  trendingList.appendChild(li);
+});
+
+// ---------- Weather ----------
+if (navigator.geolocation) {
+  navigator.geolocation.getCurrentPosition(pos => {
+    fetch(
+      `https://api.open-meteo.com/v1/forecast?latitude=${pos.coords.latitude}&longitude=${pos.coords.longitude}&current_weather=true`
+    )
+      .then(r => r.json())
+      .then(d => {
+        weatherEl.innerHTML =
+          `<strong>${Math.round(d.current_weather.temperature)}°C</strong><br>Wind ${d.current_weather.windspeed} km/h`;
+      })
+      .catch(() => {
+        weatherEl.textContent = "Weather unavailable.";
+      });
+  }, () => {
+    weatherEl.textContent = "Location blocked.";
+  });
+} else {
+  weatherEl.textContent = "Geolocation unavailable.";
+}
+</script>
+
+</body>
+</html>
